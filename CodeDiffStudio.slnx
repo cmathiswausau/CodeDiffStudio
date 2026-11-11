@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+  </Folder>
   <Project Path="CodeDiffStudio.Core/CodeDiffStudio.Core.csproj" />
   <Project Path="CodeDiffStudio.Tests/CodeDiffStudio.Tests.csproj" />
   <Project Path="CodeDiffStudio/CodeDiffStudio.csproj" />
