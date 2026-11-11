@@ -1,4 +1,5 @@
 <Solution>
   <Project Path="CodeDiffStudio.Core/CodeDiffStudio.Core.csproj" />
+  <Project Path="CodeDiffStudio.Tests/CodeDiffStudio.Tests.csproj" />
   <Project Path="CodeDiffStudio/CodeDiffStudio.csproj" />
 </Solution>
