@@ -1,4 +1,4 @@
-﻿<Window x:Class="CodeDiffStudio.MainWindow"
+<Window x:Class="CodeDiffStudio.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -6,7 +6,68 @@
         xmlns:local="clr-namespace:CodeDiffStudio"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
-    <Grid>
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Button Grid.Row="0"
+            Content="Open Left"
+            HorizontalAlignment="Left"
+            Padding="10,4" Height="26" Margin="0,0,0,28" Grid.RowSpan="2" VerticalAlignment="Bottom" Click="OpenLeft_Click" x:Name="OpenLeftButton" />
 
+        <TextBlock x:Name="LeftFileName"
+               Grid.Row="1"
+               Text="No file selected"
+               Margin="0,8,0,4" />
+
+        <TextBox x:Name="LeftFileContents"
+             Grid.Row="2"
+             AutomationProperties.Name="Left file contents"
+             IsReadOnly="True"
+             TextWrapping="NoWrap"
+             HorizontalScrollBarVisibility="Auto"
+             VerticalScrollBarVisibility="Auto" />
+        <Button x:Name="OpenRightButton"
+        Grid.Row="0"
+        Grid.Column="1"
+        Content="Open Right"
+        HorizontalAlignment="Left"
+        Margin="8,0,0,0"
+        Padding="10,4" Click="OpenRight_Click" />
+
+        <TextBlock x:Name="RightFileName"
+           Grid.Row="1"
+           Grid.Column="1"
+           Text="No file selected"
+           Margin="8,8,0,4" />
+
+        <TextBox x:Name="RightFileContents"
+         Grid.Row="2"
+         Grid.Column="1"
+         Margin="8,0,0,0"
+         AutomationProperties.Name="Right file contents"
+         IsReadOnly="True"
+         TextWrapping="NoWrap"
+         HorizontalScrollBarVisibility="Auto"
+         VerticalScrollBarVisibility="Auto" />
+        <TextBlock x:Name="ComparisonStatus"
+           Grid.Row="3"
+           Grid.ColumnSpan="2"
+           Margin="0,8,0,0"
+           Text="Open two files to compare." />
+        <Button x:Name="RefreshButton"
+        Grid.Column="1"
+        Content="Refresh"
+        HorizontalAlignment="Right"
+        Padding="10,4"
+        Grid.Row="0"
+        Click="Refresh_Click" />
     </Grid>
 </Window>
