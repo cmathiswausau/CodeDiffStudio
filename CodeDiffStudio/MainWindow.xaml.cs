@@ -58,14 +58,14 @@ namespace CodeDiffStudio
         /// <param name="paneSelection">The pane that receives the file.</param>
         /// <param name="openButton">The button that opens the picker for the pane.</param>
         /// <param name="fileName">The label that displays the selected file name.</param>
-        /// <param name="fileContents">The text box that displays the file contents.</param>
+        /// <param name="fileContents">The editor that displays the file contents.</param>
         /// <param name="pickerTitle">The title of the file picker.</param>
         /// <returns>A task that completes when the file-opening operation finishes.</returns>
         private async Task OpenFileAsync(
             PaneSelection paneSelection,
             Button openButton,
             TextBlock fileName,
-            TextBox fileContents,
+            ICSharpCode.AvalonEdit.TextEditor fileContents,
             string pickerTitle)
         {
             var picker = new Microsoft.Win32.OpenFileDialog
