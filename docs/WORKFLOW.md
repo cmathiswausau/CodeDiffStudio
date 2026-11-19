@@ -7,10 +7,16 @@ Epics describe major systems. Features and user stories are tracked as issues; i
 Backlog -> Ready -> In Progress -> In Review -> Done. Blocked is a separate label or field.
 
 ## Branches
-- main: stable integration branch
+- main: stable, validated release branch
+- test: validation branch; receives changes from dev
+- dev: integration branch for ongoing development
 - feature/issue-N-short-description
 - fix/issue-N-short-description
 - docs/issue-N-short-description
+
+Create feature, fix, and docs branches from dev. Merge completed work through pull requests in this order: feature/fix/docs -> dev -> test -> main. Validate changes on test before promoting them to main.
+
+At the start and end of each workday, check the active branch, uncommitted changes, and unpushed commits. Commit and push a reviewable checkpoint or remind the developer before ending the session.
 
 ## Definition of ready
 Clear objective, acceptance criteria, dependencies, and test approach.
