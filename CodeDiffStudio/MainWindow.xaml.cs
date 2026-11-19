@@ -23,6 +23,11 @@ namespace CodeDiffStudio
             new LineDifferenceBackgroundRenderer();
 
         /// <summary>
+        /// Indicates whether a file-opening or refresh operation is running.
+        /// </summary>
+        private bool isFileOperationRunning;
+
+        /// <summary>
         /// The path to the left file.
         /// </summary>
         private string? leftFilePath;
@@ -52,6 +57,7 @@ namespace CodeDiffStudio
             this.LeftFileContents.TextArea.TextView.BackgroundRenderers.Add(this.leftBackgroundRenderer);
 
             this.RightFileContents.TextArea.TextView.BackgroundRenderers.Add(this.rightBackgroundRenderer);
+            this.UpdateFileControls();
         }
 
         /// <summary>
@@ -84,6 +90,11 @@ namespace CodeDiffStudio
             ICSharpCode.AvalonEdit.TextEditor fileContents,
             string pickerTitle)
         {
+            if (this.isFileOperationRunning)
+            {
+                return;
+            }
+
             var picker = new Microsoft.Win32.OpenFileDialog
             {
                 Title = pickerTitle,
@@ -95,11 +106,14 @@ namespace CodeDiffStudio
                 return;
             }
 
-            openButton.IsEnabled = false;
+            this.isFileOperationRunning = true;
+            this.UpdateFileControls();
 
             try
             {
-                var contents = await System.IO.File.ReadAllTextAsync(picker.FileName);
+                string contents =
+                    await System.IO.File.ReadAllTextAsync(picker.FileName);
+
                 fileContents.Text = contents;
                 fileName.Text = System.IO.Path.GetFileName(picker.FileName);
 
@@ -107,15 +121,11 @@ namespace CodeDiffStudio
                 {
                     case PaneSelection.Left:
                         this.leftText = contents;
-
-                        // In case PaneSelection.Left:
                         this.leftFilePath = picker.FileName;
                         break;
 
                     case PaneSelection.Right:
                         this.rightText = contents;
-
-                        // In case PaneSelection.Right:
                         this.rightFilePath = picker.FileName;
                         break;
                 }
@@ -124,20 +134,20 @@ namespace CodeDiffStudio
             }
             catch (System.IO.IOException)
             {
-                MessageBox.Show(this, "Couldn't read the file. Try again or choose another file.");
+                MessageBox.Show(
+                    this,
+                    "Couldn't read the file. Try again or choose another file.");
             }
             catch (System.UnauthorizedAccessException)
             {
-                MessageBox.Show(this, "Access to the file was denied. Choose another file.");
+                MessageBox.Show(
+                    this,
+                    "Access to the file was denied. Choose another file.");
             }
             finally
             {
-                openButton.IsEnabled = true;
-                this.RefreshButton.IsEnabled =
-                this.leftFilePath is not null &&
-                this.rightFilePath is not null &&
-                this.OpenLeftButton.IsEnabled &&
-                this.OpenRightButton.IsEnabled;
+                this.isFileOperationRunning = false;
+                this.UpdateFileControls();
             }
         }
 
@@ -187,45 +197,50 @@ namespace CodeDiffStudio
         /// <returns>A task that completes when the refresh finishes.</returns>
         private async Task RefreshFilesAsync()
         {
-            if (this.leftFilePath is not string leftPath ||
+            if (this.isFileOperationRunning ||
+                this.leftFilePath is not string leftPath ||
                 this.rightFilePath is not string rightPath)
             {
                 return;
             }
 
-            this.RefreshButton.IsEnabled = false;
-            this.OpenLeftButton.IsEnabled = false;
-            this.OpenRightButton.IsEnabled = false;
+            this.isFileOperationRunning = true;
+            this.UpdateFileControls();
 
             string pathBeingRead = leftPath;
 
             try
             {
-                string newLeftText = await System.IO.File.ReadAllTextAsync(leftPath);
+                string newLeftText =
+                    await System.IO.File.ReadAllTextAsync(leftPath);
 
                 pathBeingRead = rightPath;
-                string newRightText = await System.IO.File.ReadAllTextAsync(rightPath);
+
+                string newRightText =
+                    await System.IO.File.ReadAllTextAsync(rightPath);
 
                 this.leftText = newLeftText;
                 this.rightText = newRightText;
                 this.LeftFileContents.Text = newLeftText;
                 this.RightFileContents.Text = newRightText;
+
                 this.UpdateComparisonStatus();
             }
             catch (System.Exception ex) when (
                 ex is System.IO.IOException or System.UnauthorizedAccessException)
             {
                 this.UpdateComparisonStatus();
+
                 string previousResult = this.ComparisonStatus.Text;
+
                 this.ComparisonStatus.Text =
                     $"Showing previous comparison. {previousResult} " +
                     $"Couldn't reload {pathBeingRead}. Retry or choose a replacement file.";
             }
             finally
             {
-                this.OpenLeftButton.IsEnabled = true;
-                this.OpenRightButton.IsEnabled = true;
-                this.RefreshButton.IsEnabled = true;
+                this.isFileOperationRunning = false;
+                this.UpdateFileControls();
             }
         }
 
@@ -297,6 +312,20 @@ namespace CodeDiffStudio
 
             this.RightFileContents.TextArea.TextView.InvalidateLayer(
                 ICSharpCode.AvalonEdit.Rendering.KnownLayer.Background);
+        }
+
+        /// <summary>
+        /// Updates file controls to reflect the current operation state.
+        /// </summary>
+        private void UpdateFileControls()
+        {
+            this.OpenLeftButton.IsEnabled = !this.isFileOperationRunning;
+            this.OpenRightButton.IsEnabled = !this.isFileOperationRunning;
+
+            this.RefreshButton.IsEnabled =
+                !this.isFileOperationRunning &&
+                this.leftFilePath is not null &&
+                this.rightFilePath is not null;
         }
     }
 }
