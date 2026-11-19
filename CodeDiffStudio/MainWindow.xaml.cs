@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using CodeDiffStudio.Rendering;
 
 namespace CodeDiffStudio
 {
@@ -9,6 +10,18 @@ namespace CodeDiffStudio
     /// </summary>
     public partial class MainWindow : Window
     {
+        /// <summary>
+        /// Draws difference backgrounds in the left editor.
+        /// </summary>
+        private readonly LineDifferenceBackgroundRenderer leftBackgroundRenderer =
+            new LineDifferenceBackgroundRenderer();
+
+        /// <summary>
+        /// Draws difference backgrounds in the right editor.
+        /// </summary>
+        private readonly LineDifferenceBackgroundRenderer rightBackgroundRenderer =
+            new LineDifferenceBackgroundRenderer();
+
         /// <summary>
         /// The path to the left file.
         /// </summary>
@@ -36,6 +49,9 @@ namespace CodeDiffStudio
         public MainWindow()
         {
             this.InitializeComponent();
+            this.LeftFileContents.TextArea.TextView.BackgroundRenderers.Add(this.leftBackgroundRenderer);
+
+            this.RightFileContents.TextArea.TextView.BackgroundRenderers.Add(this.rightBackgroundRenderer);
         }
 
         /// <summary>
@@ -229,6 +245,8 @@ namespace CodeDiffStudio
             CodeDiffStudio.Core.ComparisonResults results =
                 comparer.CompareText(this.leftText, this.rightText);
 
+            this.UpdateDifferenceBackgrounds(results);
+
             if (results.AreIdentical)
             {
                 this.ComparisonStatus.Text = "Files are identical.";
@@ -238,6 +256,47 @@ namespace CodeDiffStudio
                 this.ComparisonStatus.Text =
                     $"Files differ. Differences: {results.DifferenceCount}.";
             }
+        }
+
+        /// <summary>
+        /// Updates line backgrounds using the comparison results.
+        /// </summary>
+        /// <param name="results">The differences to highlight.</param>
+        private void UpdateDifferenceBackgrounds(
+            CodeDiffStudio.Core.ComparisonResults results)
+        {
+            this.leftBackgroundRenderer.LineBackgrounds.Clear();
+            this.rightBackgroundRenderer.LineBackgrounds.Clear();
+
+            foreach (CodeDiffStudio.Core.LineDifference line in results.LineDifferences)
+            {
+                switch (line.DifferenceType)
+                {
+                    case CodeDiffStudio.Core.DifferenceType.Added:
+                        this.rightBackgroundRenderer.LineBackgrounds[line.NewLineNumber] =
+                            System.Windows.Media.Brushes.LightGreen;
+                        break;
+
+                    case CodeDiffStudio.Core.DifferenceType.Removed:
+                        this.leftBackgroundRenderer.LineBackgrounds[line.OriginalLineNumber] =
+                            System.Windows.Media.Brushes.LightPink;
+                        break;
+
+                    case CodeDiffStudio.Core.DifferenceType.Modified:
+                        this.leftBackgroundRenderer.LineBackgrounds[line.OriginalLineNumber] =
+                            System.Windows.Media.Brushes.Gold;
+
+                        this.rightBackgroundRenderer.LineBackgrounds[line.NewLineNumber] =
+                            System.Windows.Media.Brushes.Gold;
+                        break;
+                }
+            }
+
+            this.LeftFileContents.TextArea.TextView.InvalidateLayer(
+                ICSharpCode.AvalonEdit.Rendering.KnownLayer.Background);
+
+            this.RightFileContents.TextArea.TextView.InvalidateLayer(
+                ICSharpCode.AvalonEdit.Rendering.KnownLayer.Background);
         }
     }
 }
