@@ -1,0 +1,39 @@
+name: Windows CI
+
+on:
+  push:
+    branches: [test, main]
+  pull_request:
+    branches: [dev, test, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build and test
+    runs-on: windows-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore packages
+        run: dotnet restore CodeDiffStudio.slnx
+
+      - name: Build solution
+        run: dotnet build CodeDiffStudio.slnx --configuration Release --no-restore
+
+      - name: Run tests
+        run: dotnet test CodeDiffStudio.Tests/CodeDiffStudio.Tests.csproj --configuration Release --no-build --no-restore
