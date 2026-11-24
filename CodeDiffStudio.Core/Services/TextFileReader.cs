@@ -6,18 +6,22 @@ namespace CodeDiffStudio.Core
     public class TextFileReader : ITextFileReader
     {
         /// <summary>
-        /// Reads the complete text of a file asynchronously.
+        /// Reads a file and captures its path and text.
         /// </summary>
         /// <param name="filePath">The path of the file to read.</param>
         /// <param name="cancellationToken">The token used to request cancellation.</param>
-        /// <returns>A task containing the file text.</returns>
-        public Task<string> ReadAllTextAsync(
+        /// <returns>A task containing the successfully loaded file snapshot.</returns>
+        public async Task<FileSnapshot> ReadAsync(
             string filePath,
             CancellationToken cancellationToken = default)
         {
-            return System.IO.File.ReadAllTextAsync(
+            ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+
+            string text = await System.IO.File.ReadAllTextAsync(
                 filePath,
                 cancellationToken);
+
+            return new FileSnapshot(filePath, text);
         }
     }
 }
