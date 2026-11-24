@@ -3,20 +3,31 @@ namespace CodeDiffStudio.Core
     /// <summary>
     /// Compares files and returns their differences.
     /// </summary>
-    public class FileComparer
+    public class FileComparer : IFileComparer
     {
         /// <summary>
         /// Compares lines while preserving matches after insertions and removals.
         /// </summary>
         /// <param name="originalLines">The lines from the original file.</param>
         /// <param name="newLines">The lines from the new file.</param>
-        /// <returns>The results of the comparison.</returns>
-        public ComparisonResults Compare(string[] originalLines, string[] newLines)
+        /// <param name="cancellationToken">The token used to request cancellation.</param>
+        /// <returns>The completed comparison results.</returns>
+        /// <exception cref="OperationCanceledException">
+        /// Cancellation was requested before the comparison completed.
+        /// </exception>
+        public ComparisonResults Compare(
+            string[] originalLines,
+            string[] newLines,
+            CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             ComparisonResults results = new ComparisonResults();
 
-            int[,] matchingLineTable =
-                this.BuildMatchingLineTable(originalLines, newLines);
+            int[,] matchingLineTable = this.BuildMatchingLineTable(
+                originalLines,
+                newLines,
+                cancellationToken);
 
             int originalIndex = 0;
             int newIndex = 0;
@@ -24,6 +35,8 @@ namespace CodeDiffStudio.Core
             while (originalIndex < originalLines.Length ||
                 newIndex < newLines.Length)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 LineDifference lineDifference = new LineDifference();
 
                 if (originalIndex >= originalLines.Length)
@@ -70,6 +83,7 @@ namespace CodeDiffStudio.Core
                 results.LineDifferences.Add(lineDifference);
             }
 
+            cancellationToken.ThrowIfCancellationRequested();
             return results;
         }
 
@@ -78,25 +92,43 @@ namespace CodeDiffStudio.Core
         /// </summary>
         /// <param name="originalText">The text from the original file.</param>
         /// <param name="newText">The text from the new file.</param>
-        /// <returns>The results of the comparison.</returns>
-        public ComparisonResults CompareText(string originalText, string newText)
+        /// <param name="cancellationToken">The token used to request cancellation.</param>
+        /// <returns>The completed comparison results.</returns>
+        /// <exception cref="OperationCanceledException">
+        /// Cancellation was requested before the comparison completed.
+        /// </exception>
+        public ComparisonResults CompareText(
+            string originalText,
+            string newText,
+            CancellationToken cancellationToken = default)
         {
-            string[] originalLines = this.SplitLinesWithEndings(originalText);
-            string[] newLines = this.SplitLinesWithEndings(newText);
+            cancellationToken.ThrowIfCancellationRequested();
 
-            return this.Compare(originalLines, newLines);
+            string[] originalLines = this.SplitLinesWithEndings(
+                originalText,
+                cancellationToken);
+
+            string[] newLines = this.SplitLinesWithEndings(
+                newText,
+                cancellationToken);
+
+            return this.Compare(originalLines, newLines, cancellationToken);
         }
 
         /// <summary>
-        /// Builds a table containing the number of matching lines remaining from each pair of positions.
+        /// Builds the table of remaining matching line counts.
         /// </summary>
         /// <param name="originalLines">The lines from the original file.</param>
         /// <param name="newLines">The lines from the new file.</param>
+        /// <param name="cancellationToken">The token used to request cancellation.</param>
         /// <returns>The table of matching line counts.</returns>
         private int[,] BuildMatchingLineTable(
             string[] originalLines,
-            string[] newLines)
+            string[] newLines,
+            CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             int[,] matchingLineTable =
                 new int[originalLines.Length + 1, newLines.Length + 1];
 
@@ -104,10 +136,14 @@ namespace CodeDiffStudio.Core
                 originalIndex >= 0;
                 originalIndex--)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 for (int newIndex = newLines.Length - 1;
                     newIndex >= 0;
                     newIndex--)
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
+
                     if (originalLines[originalIndex] == newLines[newIndex])
                     {
                         matchingLineTable[originalIndex, newIndex] =
@@ -129,14 +165,21 @@ namespace CodeDiffStudio.Core
         /// Splits text into lines, keeping each line ending attached.
         /// </summary>
         /// <param name="text">The text to split into lines.</param>
+        /// <param name="cancellationToken">The token used to request cancellation.</param>
         /// <returns>The lines with their original line endings.</returns>
-        private string[] SplitLinesWithEndings(string text)
+        private string[] SplitLinesWithEndings(
+            string text,
+            CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             List<string> lines = new List<string>();
             int lineStart = 0;
 
             for (int index = 0; index < text.Length; index++)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 if (text[index] == '\r' || text[index] == '\n')
                 {
                     if (text[index] == '\r' &&
@@ -159,6 +202,7 @@ namespace CodeDiffStudio.Core
                 lines.Add(text.Substring(lineStart));
             }
 
+            cancellationToken.ThrowIfCancellationRequested();
             return lines.ToArray();
         }
     }

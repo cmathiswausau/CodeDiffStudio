@@ -11,6 +11,11 @@ namespace CodeDiffStudio
     public partial class MainWindow : Window
     {
         /// <summary>
+        /// Compares the loaded file text.
+        /// </summary>
+        private readonly CodeDiffStudio.Core.IFileComparer fileComparer;
+
+        /// <summary>
         /// Draws difference backgrounds in the left editor.
         /// </summary>
         private readonly LineDifferenceBackgroundRenderer leftBackgroundRenderer =
@@ -46,7 +51,9 @@ namespace CodeDiffStudio
         /// Initializes a new instance of the <see cref="MainWindow" /> class.
         /// </summary>
         public MainWindow()
-            : this(new CodeDiffStudio.Core.TextFileReader())
+            : this(
+                new CodeDiffStudio.Core.TextFileReader(),
+                new CodeDiffStudio.Core.FileComparer())
         {
         }
 
@@ -56,10 +63,25 @@ namespace CodeDiffStudio
         /// </summary>
         /// <param name="textFileReader">The reader used to load text files.</param>
         public MainWindow(CodeDiffStudio.Core.ITextFileReader textFileReader)
+            : this(textFileReader, new CodeDiffStudio.Core.FileComparer())
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MainWindow" /> class with the specified
+        /// file reader and comparer.
+        /// </summary>
+        /// <param name="textFileReader">The reader used to load text files.</param>
+        /// <param name="fileComparer">The service used to compare text.</param>
+        public MainWindow(
+            CodeDiffStudio.Core.ITextFileReader textFileReader,
+            CodeDiffStudio.Core.IFileComparer fileComparer)
         {
             ArgumentNullException.ThrowIfNull(textFileReader);
+            ArgumentNullException.ThrowIfNull(fileComparer);
 
             this.textFileReader = textFileReader;
+            this.fileComparer = fileComparer;
             this.InitializeComponent();
 
             this.LeftFileContents.TextArea.TextView.BackgroundRenderers.Add(
@@ -290,11 +312,8 @@ namespace CodeDiffStudio
                 return;
             }
 
-            CodeDiffStudio.Core.FileComparer comparer =
-                new CodeDiffStudio.Core.FileComparer();
-
             CodeDiffStudio.Core.ComparisonResults results =
-                comparer.CompareText(
+                this.fileComparer.CompareText(
                     this.leftSnapshot.Text,
                     this.rightSnapshot.Text);
 
