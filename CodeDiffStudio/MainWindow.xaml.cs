@@ -23,6 +23,11 @@ namespace CodeDiffStudio
             new LineDifferenceBackgroundRenderer();
 
         /// <summary>
+        /// Reads the selected text files.
+        /// </summary>
+        private readonly CodeDiffStudio.Core.ITextFileReader textFileReader;
+
+        /// <summary>
         /// Indicates whether a file-opening or refresh operation is running.
         /// </summary>
         private bool isFileOperationRunning;
@@ -52,11 +57,28 @@ namespace CodeDiffStudio
         /// Initializes a new instance of the <see cref="MainWindow" /> class.
         /// </summary>
         public MainWindow()
+            : this(new CodeDiffStudio.Core.TextFileReader())
         {
-            this.InitializeComponent();
-            this.LeftFileContents.TextArea.TextView.BackgroundRenderers.Add(this.leftBackgroundRenderer);
+        }
 
-            this.RightFileContents.TextArea.TextView.BackgroundRenderers.Add(this.rightBackgroundRenderer);
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MainWindow" /> class with the specified
+        /// text file reader.
+        /// </summary>
+        /// <param name="textFileReader">The reader used to load text files.</param>
+        public MainWindow(CodeDiffStudio.Core.ITextFileReader textFileReader)
+        {
+            ArgumentNullException.ThrowIfNull(textFileReader);
+
+            this.textFileReader = textFileReader;
+            this.InitializeComponent();
+
+            this.LeftFileContents.TextArea.TextView.BackgroundRenderers.Add(
+                this.leftBackgroundRenderer);
+
+            this.RightFileContents.TextArea.TextView.BackgroundRenderers.Add(
+                this.rightBackgroundRenderer);
+
             this.UpdateFileControls();
         }
 
@@ -112,7 +134,7 @@ namespace CodeDiffStudio
             try
             {
                 string contents =
-                    await System.IO.File.ReadAllTextAsync(picker.FileName);
+                    await this.textFileReader.ReadAllTextAsync(picker.FileName);
 
                 fileContents.Text = contents;
                 fileName.Text = System.IO.Path.GetFileName(picker.FileName);
@@ -208,12 +230,12 @@ namespace CodeDiffStudio
             try
             {
                 string newLeftText =
-                    await System.IO.File.ReadAllTextAsync(leftPath);
+                    await this.textFileReader.ReadAllTextAsync(leftPath);
 
                 pathBeingRead = rightPath;
 
                 string newRightText =
-                    await System.IO.File.ReadAllTextAsync(rightPath);
+                    await this.textFileReader.ReadAllTextAsync(rightPath);
 
                 this.leftText = newLeftText;
                 this.rightText = newRightText;
