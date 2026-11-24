@@ -9,6 +9,7 @@ namespace CodeDiffStudio.Tests
         /// <summary>
         /// Verifies that a cancellation request is passed to the file read.
         /// </summary>
+        /// <returns>A task representing the asynchronous test.</returns>
         [TestMethod]
         public async Task CancelledReadThrowsOperationCanceledException()
         {
@@ -42,6 +43,7 @@ namespace CodeDiffStudio.Tests
         /// <summary>
         /// Verifies that a missing file produces a file-not-found error.
         /// </summary>
+        /// <returns>A task representing the asynchronous test.</returns>
         [TestMethod]
         public async Task MissingFileThrowsFileNotFoundException()
         {
@@ -60,6 +62,7 @@ namespace CodeDiffStudio.Tests
         /// Verifies exact text preservation without changing source bytes.
         /// </summary>
         /// <param name="expectedText">The text to write and read.</param>
+        /// <returns>A task representing the asynchronous test.</returns>
         [TestMethod]
         [DataRow("")]
         [DataRow("Café 日本語 😀")]
