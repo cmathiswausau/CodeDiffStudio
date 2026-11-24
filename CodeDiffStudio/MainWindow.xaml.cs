@@ -132,17 +132,13 @@ namespace CodeDiffStudio
 
                 this.UpdateComparisonStatus();
             }
-            catch (System.IO.IOException)
+            catch (System.Exception ex) when (
+                ex is System.IO.IOException or System.UnauthorizedAccessException)
             {
-                MessageBox.Show(
-                    this,
-                    "Couldn't read the file. Try again or choose another file.");
-            }
-            catch (System.UnauthorizedAccessException)
-            {
-                MessageBox.Show(
-                    this,
-                    "Access to the file was denied. Choose another file.");
+                this.ShowFileError(
+                    picker.FileName,
+                    "open the file",
+                    ex is System.UnauthorizedAccessException ? "Access was denied. Choose another file." : "Try opening the file again or choose another file.");
             }
             finally
             {
@@ -229,13 +225,14 @@ namespace CodeDiffStudio
             catch (System.Exception ex) when (
                 ex is System.IO.IOException or System.UnauthorizedAccessException)
             {
-                this.UpdateComparisonStatus();
+                string recoveryInstruction = ex is System.UnauthorizedAccessException
+                    ? "Access was denied. Restore access and press F5, or choose a replacement file."
+                    : "Press F5 to retry or choose a replacement file.";
 
-                string previousResult = this.ComparisonStatus.Text;
-
-                this.ComparisonStatus.Text =
-                    $"Showing previous comparison. {previousResult} " +
-                    $"Couldn't reload {pathBeingRead}. Retry or choose a replacement file.";
+                this.ShowFileError(
+                    pathBeingRead,
+                    "reload the file",
+                    recoveryInstruction);
             }
             finally
             {
@@ -245,12 +242,42 @@ namespace CodeDiffStudio
         }
 
         /// <summary>
+        /// Displays a file error while preserving the previous comparison.
+        /// </summary>
+        /// <param name="filePath">The full path of the file that failed.</param>
+        /// <param name="operation">The operation that failed.</param>
+        /// <param name="recoveryInstruction">Instructions for recovering from the error.</param>
+        private void ShowFileError(
+            string filePath,
+            string operation,
+            string recoveryInstruction)
+        {
+            this.UpdateComparisonStatus();
+
+            string previousResult = string.Empty;
+
+            if (this.leftText is not null && this.rightText is not null)
+            {
+                previousResult =
+                    $"Showing previous comparison. {this.ComparisonStatus.Text}\n";
+            }
+
+            this.ComparisonStatus.Text =
+                $"{previousResult}Couldn't {operation}:\n{filePath}\n{recoveryInstruction}";
+
+            this.ComparisonStatus.CaretIndex = 0;
+            this.ComparisonStatus.ScrollToHome();
+            this.ComparisonStatus.Focus();
+        }
+
+        /// <summary>
         /// Updates the comparison status after both files have loaded.
         /// </summary>
         private void UpdateComparisonStatus()
         {
             if (this.leftText == null || this.rightText == null)
             {
+                this.ComparisonStatus.Text = "Open two files to compare.";
                 return;
             }
 
