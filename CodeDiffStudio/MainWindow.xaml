@@ -9,6 +9,8 @@
     mc:Ignorable="d"
     PreviewKeyDown="MainWindow_PreviewKeyDown"
     Title="MainWindow"
+    MinWidth="640"
+    MinHeight="360"
     Height="450"
     Width="800">
     <Grid
@@ -84,11 +86,20 @@
             WordWrap="False"
             HorizontalScrollBarVisibility="Auto"
             VerticalScrollBarVisibility="Auto" />
-        <TextBlock
+        <TextBox
             x:Name="ComparisonStatus"
             Grid.Row="3"
             Grid.ColumnSpan="2"
             Margin="0,8,0,0"
+            Padding="4"
+            MaxHeight="96"
+            IsReadOnly="True"
+            IsReadOnlyCaretVisible="True"
+            TextWrapping="Wrap"
+            VerticalScrollBarVisibility="Auto"
+            HorizontalScrollBarVisibility="Disabled"
+            AutomationProperties.Name="Comparison status and file errors"
+            AutomationProperties.HelpText="Use arrow keys to read the message, or Ctrl+A and Ctrl+C to copy it."
             Text="Open two files to compare." />
         <Button
             x:Name="RefreshButton"
