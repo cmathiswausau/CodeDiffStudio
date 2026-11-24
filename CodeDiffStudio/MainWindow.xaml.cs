@@ -33,25 +33,14 @@ namespace CodeDiffStudio
         private bool isFileOperationRunning;
 
         /// <summary>
-        /// The path to the left file.
+        /// Contains the successfully loaded left file.
         /// </summary>
-        private string? leftFilePath;
+        private CodeDiffStudio.Core.FileSnapshot? leftSnapshot;
 
         /// <summary>
-        /// Text for the left side, or null if unavailable.
+        /// Contains the successfully loaded right file.
         /// </summary>
-        private string? leftText;
-
-        /// <summary>
-        /// Path to the file on the right side of the comparison.
-        /// </summary>
-        /// <remarks>Null when no right-side file is selected.</remarks>
-        private string? rightFilePath;
-
-        /// <summary>
-        /// The text displayed on the right side.
-        /// </summary>
-        private string? rightText;
+        private CodeDiffStudio.Core.FileSnapshot? rightSnapshot;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MainWindow" /> class.
@@ -133,22 +122,20 @@ namespace CodeDiffStudio
 
             try
             {
-                string contents =
-                    await this.textFileReader.ReadAllTextAsync(picker.FileName);
+                CodeDiffStudio.Core.FileSnapshot snapshot =
+                    await this.textFileReader.ReadAsync(picker.FileName);
 
-                fileContents.Text = contents;
-                fileName.Text = System.IO.Path.GetFileName(picker.FileName);
+                fileContents.Text = snapshot.Text;
+                fileName.Text = System.IO.Path.GetFileName(snapshot.FilePath);
 
                 switch (paneSelection)
                 {
                     case PaneSelection.Left:
-                        this.leftText = contents;
-                        this.leftFilePath = picker.FileName;
+                        this.leftSnapshot = snapshot;
                         break;
 
                     case PaneSelection.Right:
-                        this.rightText = contents;
-                        this.rightFilePath = picker.FileName;
+                        this.rightSnapshot = snapshot;
                         break;
                 }
 
@@ -216,8 +203,8 @@ namespace CodeDiffStudio
         private async Task RefreshFilesAsync()
         {
             if (this.isFileOperationRunning ||
-                this.leftFilePath is not string leftPath ||
-                this.rightFilePath is not string rightPath)
+                this.leftSnapshot is not CodeDiffStudio.Core.FileSnapshot leftFile ||
+                this.rightSnapshot is not CodeDiffStudio.Core.FileSnapshot rightFile)
             {
                 return;
             }
@@ -225,22 +212,22 @@ namespace CodeDiffStudio
             this.isFileOperationRunning = true;
             this.UpdateFileControls();
 
-            string pathBeingRead = leftPath;
+            string pathBeingRead = leftFile.FilePath;
 
             try
             {
-                string newLeftText =
-                    await this.textFileReader.ReadAllTextAsync(leftPath);
+                CodeDiffStudio.Core.FileSnapshot newLeftSnapshot =
+                    await this.textFileReader.ReadAsync(leftFile.FilePath);
 
-                pathBeingRead = rightPath;
+                pathBeingRead = rightFile.FilePath;
 
-                string newRightText =
-                    await this.textFileReader.ReadAllTextAsync(rightPath);
+                CodeDiffStudio.Core.FileSnapshot newRightSnapshot =
+                    await this.textFileReader.ReadAsync(rightFile.FilePath);
 
-                this.leftText = newLeftText;
-                this.rightText = newRightText;
-                this.LeftFileContents.Text = newLeftText;
-                this.RightFileContents.Text = newRightText;
+                this.leftSnapshot = newLeftSnapshot;
+                this.rightSnapshot = newRightSnapshot;
+                this.LeftFileContents.Text = newLeftSnapshot.Text;
+                this.RightFileContents.Text = newRightSnapshot.Text;
 
                 this.UpdateComparisonStatus();
             }
@@ -278,7 +265,7 @@ namespace CodeDiffStudio
 
             string previousResult = string.Empty;
 
-            if (this.leftText is not null && this.rightText is not null)
+            if (this.leftSnapshot is not null && this.rightSnapshot is not null)
             {
                 previousResult =
                     $"Showing previous comparison. {this.ComparisonStatus.Text}\n";
@@ -297,7 +284,7 @@ namespace CodeDiffStudio
         /// </summary>
         private void UpdateComparisonStatus()
         {
-            if (this.leftText == null || this.rightText == null)
+            if (this.leftSnapshot == null || this.rightSnapshot == null)
             {
                 this.ComparisonStatus.Text = "Open two files to compare.";
                 return;
@@ -307,7 +294,9 @@ namespace CodeDiffStudio
                 new CodeDiffStudio.Core.FileComparer();
 
             CodeDiffStudio.Core.ComparisonResults results =
-                comparer.CompareText(this.leftText, this.rightText);
+                comparer.CompareText(
+                    this.leftSnapshot.Text,
+                    this.rightSnapshot.Text);
 
             this.UpdateDifferenceBackgrounds(results);
 
@@ -373,8 +362,8 @@ namespace CodeDiffStudio
 
             this.RefreshButton.IsEnabled =
                 !this.isFileOperationRunning &&
-                this.leftFilePath is not null &&
-                this.rightFilePath is not null;
+                this.leftSnapshot is not null &&
+                this.rightSnapshot is not null;
         }
     }
 }

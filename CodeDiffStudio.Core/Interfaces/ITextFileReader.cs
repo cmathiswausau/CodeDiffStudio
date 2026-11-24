@@ -6,12 +6,12 @@ namespace CodeDiffStudio.Core
     public interface ITextFileReader
     {
         /// <summary>
-        /// Reads the complete text of a file asynchronously.
+        /// Reads a file and captures its path and text.
         /// </summary>
         /// <param name="filePath">The path of the file to read.</param>
         /// <param name="cancellationToken">The token used to request cancellation.</param>
-        /// <returns>A task containing the file text.</returns>
-        Task<string> ReadAllTextAsync(
+        /// <returns>A task containing the successfully loaded file snapshot.</returns>
+        Task<FileSnapshot> ReadAsync(
             string filePath,
             CancellationToken cancellationToken = default);
     }

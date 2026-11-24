@@ -30,9 +30,46 @@ namespace CodeDiffStudio.Tests
                     new CodeDiffStudio.Core.TextFileReader();
 
                 await Assert.ThrowsAsync<OperationCanceledException>(
-                    () => reader.ReadAllTextAsync(
+                    () => reader.ReadAsync(
                         filePath,
                         cancellationSource.Token));
+            }
+            finally
+            {
+                File.Delete(filePath);
+            }
+        }
+
+        /// <summary>
+        /// Verifies that later disk changes do not alter an existing snapshot.
+        /// </summary>
+        /// <returns>A task representing the asynchronous test.</returns>
+        [TestMethod]
+        public async Task LoadedSnapshotRetainsTextAfterFileChanges()
+        {
+            string filePath = Path.Combine(
+                Path.GetTempPath(),
+                $"{Guid.NewGuid():N}.txt");
+
+            try
+            {
+                await File.WriteAllTextAsync(filePath, "Original text");
+
+                CodeDiffStudio.Core.ITextFileReader reader =
+                    new CodeDiffStudio.Core.TextFileReader();
+
+                CodeDiffStudio.Core.FileSnapshot originalSnapshot =
+                    await reader.ReadAsync(filePath);
+
+                await File.WriteAllTextAsync(filePath, "Updated text");
+
+                CodeDiffStudio.Core.FileSnapshot updatedSnapshot =
+                    await reader.ReadAsync(filePath);
+
+                Assert.AreEqual("Original text", originalSnapshot.Text);
+                Assert.AreEqual("Updated text", updatedSnapshot.Text);
+                Assert.AreEqual(filePath, originalSnapshot.FilePath);
+                Assert.AreEqual(filePath, updatedSnapshot.FilePath);
             }
             finally
             {
@@ -55,7 +92,7 @@ namespace CodeDiffStudio.Tests
                 new CodeDiffStudio.Core.TextFileReader();
 
             await Assert.ThrowsExactlyAsync<FileNotFoundException>(
-                () => reader.ReadAllTextAsync(filePath));
+                () => reader.ReadAsync(filePath));
         }
 
         /// <summary>
@@ -84,10 +121,12 @@ namespace CodeDiffStudio.Tests
                 CodeDiffStudio.Core.ITextFileReader reader =
                     new CodeDiffStudio.Core.TextFileReader();
 
-                string actualText = await reader.ReadAllTextAsync(filePath);
+                CodeDiffStudio.Core.FileSnapshot snapshot =
+                    await reader.ReadAsync(filePath);
                 byte[] remainingBytes = await File.ReadAllBytesAsync(filePath);
 
-                Assert.AreEqual(expectedText, actualText);
+                Assert.AreEqual(filePath, snapshot.FilePath);
+                Assert.AreEqual(expectedText, snapshot.Text);
                 CollectionAssert.AreEqual(originalBytes, remainingBytes);
             }
             finally
